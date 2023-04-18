@@ -1,0 +1,73 @@
+server:
+  port: 8080
+spring:
+  application:
+    #应用的名称,可选,默认是项目名称
+    name: daguai
+#  会自动配置策略为查询操作由从数据库处理,其他操作由主数据库处理
+  shardingsphere:
+    datasource:
+      names:
+        master,slave
+      #主数据源,名字要与上面对应
+      master:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/daguai?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+        username: root
+        password: 123456
+      #从数据源
+      slave:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/daguai?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+        username: root
+        password: 123456
+    masterslave:
+      #负载均衡多从库读写分离策略配置
+      load-balance-algorithm-type: round_robin #轮询
+      #最终数据源名称
+      name: dataSource
+      #主数据源名称
+      master-data-source-name: master
+      #从数据源名称列表,多个之间逗号分隔
+      slave-data-source-names: slave
+    props:
+      sql:
+        show: false #控制台输出sql显示,默认false
+  main:
+    #dataSource对象springboot会自动配置创建一个,shardingsphere也会创建一个对象,会冲突,加上此行后允许bean覆盖配置项,即shardingsphere定义的bean会覆盖原本的sp的自动配置
+    allow-bean-definition-overriding: true
+
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    password: 123456
+
+  cache:
+    redis:
+      time-to-live: 1800000 #设置缓存数据的过期时间
+
+      #单数据库配置
+#  datasource:
+#    druid:
+#      username: root
+#      password: 123456
+#      driver-class-name: com.mysql.cj.jdbc.Driver
+#      url: jdbc:mysql://localhost:3306/daguai?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+
+mybatis-plus:
+  configuration:
+    #在映射实体或者属性时，将数据库中表名和字段名中的下划线去掉，按照驼峰命名法映射
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: ASSIGN_ID
+#  mapper-locations: classpath:mapper/*.xml
+logging:
+  level:
+    com:
+      tisai:
+        daguai: error

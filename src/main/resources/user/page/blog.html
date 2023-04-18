@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>小狼开发</title>
+    <link rel="stylesheet" href="../../admin/plugins/element-ui/index.css"/>
+
+
+    <style>
+        /*.block{*/
+        /*    display: flex;*/
+        /*    flex-wrap: wrap;*/
+        /*}*/
+        html, body {
+            height: 100%;
+            width: 99%;
+
+        }
+        .el-main{
+            height: 100%;
+            width: 100%;
+            /*background-color: rgba(0,0,0,0.8);*/
+            -moz-opacity:0.80;
+            opacity: 0.80
+            /*background-image: url("content/subImage/back-1.png");*/
+            /*filter:alpha(Opacity=85);*/
+
+        }
+
+        /*body {*/
+        /*    overflow-x: hidden;*/
+        /*    overflow-y: hidden;*/
+        /*}*/
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+
+        }
+
+        .demo-table-expand {
+            font-size: 0;
+        }
+        .demo-table-expand label {
+            width: 90px;
+            color: #99a9bf;
+        }
+        .demo-table-expand .el-form-item {
+            margin-right: 0;
+            margin-bottom: 0;
+            width: 50%;
+        }
+
+    </style>
+</head>
+<body>
+<div id="blog" style="height: 100%">
+    <el-container style="height: 100%">
+        <el-header style="height: 10%">
+            <div class="tableBar">
+                <el-input
+                        v-model="input"
+                        placeholder="请输入博客标题或内容查询"
+                        style="width: 250px"
+                        clearable
+                        @keyup.enter.native="handleQuery"
+                >
+                    <i
+                            slot="prefix"
+                            class="el-input__icon el-icon-search"
+                            style="cursor: pointer"
+                            @click="init"
+                    ></i>
+                </el-input>
+
+                <el-select v-model="value" placeholder="请选择">
+                    <el-option
+                            v-for="item in blogCateList"
+                            :key="item.id"
+                            :label="item.name"
+                            :value="item.id">
+                    </el-option>
+                </el-select>
+                <el-button type="primary" @click="handleQuery">查询</el-button>
+            </div>
+        </el-header>
+
+        <el-main style="height: 85%">
+            <el-table
+                    :data="blogList"
+                    style="width: 100%">
+                <el-table-column type="expand">
+                    <template slot-scope="props">
+                        <el-form label-position="left" inline class="demo-table-expand">
+                            <el-form-item label="博客标题">
+                                <span>{{ props.row.title }}</span>
+                            </el-form-item>
+                            <el-form-item label="博客分类">
+                                <span>{{ props.row.categoryName }}</span>
+                            </el-form-item>
+                            <el-form-item label="博客内容">
+                                <span>{{ props.row.content }}</span>
+                            </el-form-item>
+                            <el-form-item label="相关图片">
+                                    <el-image style="width: auto; height: 40px; border:none;cursor: pointer;" :src="getImage(props.row.image)" :preview-src-list="[ `/common/download?name=${props.row.image}` ]" ></el-image>
+                            </el-form-item>
+                            <el-form-item label="相关链接">
+                                <span>{{ props.row.url }}</span>
+                            </el-form-item>
+                            <el-form-item label="关联商品">
+                                <span>{{props.row.productsName}}</span>
+                            </el-form-item>
+                            <el-form-item label="发布时间">
+                                <span>{{ props.row.createTime }}</span>
+                            </el-form-item>
+                            <el-form-item label="更新时间">
+                                <span>{{ props.row.updateTime }}</span>
+                            </el-form-item>
+                        </el-form>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        label="博客标题"
+                        prop="title">
+                </el-table-column>
+                <el-table-column
+                        label="博客分类"
+                        prop="categoryName">
+                </el-table-column>
+                <el-table-column
+                        label="博客内容"
+                        prop="content">
+                </el-table-column>
+                <el-table-column
+                        label="发布时间"
+                        prop="createTime">
+                </el-table-column>
+            </el-table>
+
+        </el-main>
+
+        <el-footer style="height: 5%;bottom: 10px">
+
+            <div class="pageSet">
+                <el-pagination
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page="this.page"
+                        :page-sizes="[10, 20, 50, 100]"
+                        :page-size="this.pageSize"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="this.count"
+                        style="color: white">
+                </el-pagination>
+            </div>
+        </el-footer>
+
+    </el-container>
+
+</div>
+
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../../admin/plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../../admin/plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="../../admin/plugins/axios/axios.min.js"></script>
+<script src="../js/request.js"></script>
+<script src="../../admin/api/product.js"></script>
+<script src="../../admin/api/blog.js"></script>
+
+<script>
+    new Vue({
+        el: '#blog',
+        data() {
+            return {
+                input: '',
+                value: '',
+                blogCateList: [],
+                blogList: [],
+                page: 1,
+                pageSize: 10,
+                count: 0,
+            }
+        },
+        created() {
+            // alert(123)
+            this.getBlogType();
+            this.init()
+            console.log(this.blogList)
+        },
+        methods: {
+            async init() {
+                this.index = 0;
+                const params = {
+                    page: this.page,
+                    pageSize: this.pageSize,
+                    name: this.input ? this.input : undefined,
+                    type: this.value ? this.value : undefined
+                }
+                // alert(this.input)
+                await getBlogPage(params).then(res => {
+                    if (res.code == 1) {
+                        this.blogList = res.data.records;
+                        this.count = res.data.total;
+                        for (let i = 0; i < this.count; i++) {
+                            this.blogList[i].productsName=this.getBlogProductsName(this.blogList[i].blogProducts)
+                        }
+                    }else {
+                        this.$message.error(res.msg)
+                    }
+                })
+            },
+            getBlogType() {
+                getCategoryList({'type': 2}).then(res => {
+                    // alert(res.code)
+                    if (res.code == '1') {
+                        this.blogCateList = res.data
+                        this.blogCateList = [...this.blogCateList, {id: 0, name: '全部'}]
+                        console.log(this.blogCateList)
+                        // this.getproductList(res.data[0].id)
+                    } else {
+                        console.log(res.data)
+                        this.$message.error(res.msg)
+                    }
+                })
+            },
+            handleQuery() {
+                this.page = 1;
+                this.init()
+            },
+            getImage(image) {
+                return `/common/download?name=${image}`
+            },
+            getBlogProductsName(val){
+                let arraySize=val.length;
+                if(arraySize!==0) {
+                    let finalName = val[0].name;
+                    for (let i = 1; i < arraySize; i++) {
+                        finalName+=(" , "+val[i].name);
+                    }
+                    return finalName;
+                }else{
+                    return "";
+                }
+            },
+            handleSizeChange(val) {
+                this.pageSize = val
+                this.init()
+            },
+            handleCurrentChange(val) {
+                this.page = val
+                this.init()
+            }
+        }
+
+    })
+</script>
+</body>
+</html>

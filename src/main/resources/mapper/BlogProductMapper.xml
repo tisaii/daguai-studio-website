@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tisai.daguai.mapper.BlogProductMapper">
+
+    <resultMap id="BaseResultMap" type="com.tisai.daguai.domain.BlogProduct">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="blogId" column="blog_id" jdbcType="BIGINT"/>
+            <result property="productId" column="product_id" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,blog_id,product_id
+    </sql>
+</mapper>

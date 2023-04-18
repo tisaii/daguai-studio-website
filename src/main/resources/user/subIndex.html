@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>小狼开发</title>
+    <!-- 引入样式 -->
+    <link rel="icon" href="content/favicon.ico" type="images/x-ico" />
+    <link rel="stylesheet" href="../admin/plugins/element-ui/index.css"/>
+    <link rel="stylesheet" href="../admin/styles/common.css"/>
+    <link rel="stylesheet" href="../admin/styles/page.css"/>
+
+    <style>
+        body{
+            overflow-x:hidden; overflow-y:hidden;
+        }
+        .el-main{
+            height: 100%;
+            width: 100%;
+            background-color: rgba(0,0,0,0.8);
+            /*-moz-opacity:0.80;*/
+            /*opacity: 0.80*/
+            /*background-image: url("content/subImage/back-1.png");*/
+            /*filter:alpha(Opacity=85);*/
+
+        }
+        .c_div{
+            /*height: 100%;*/
+            /*width: 100%;*/
+            /*background-color: #000000;*/
+            /*-moz-opacity:0.80;*/
+            /*opacity: 0.80*/
+            height: 100%;
+            width: 100%;
+            background-image: url("content/subImage/back-1.png");
+            filter:alpha(Opacity=85);
+        }
+    </style>
+
+</head>
+<body>
+<div id="app">
+
+<el-container style="height: 100%">
+    <el-header style="width: 100%; background-color: #000000;background-image: linear-gradient(147deg, #000000 0%, #2c3e50 74%);">
+<!--    <div class="line"></div>-->
+    <el-menu
+            :default-active="activeIndex"
+            class="el-menu-demo"
+            mode="horizontal"
+            @select="handleSelect"
+            background-color= transparent
+            text-color="#fff"
+            active-text-color="#ffd04b">
+
+        <el-menu-item :index="0">首页</el-menu-item>
+        <el-menu-item :index="1">全部产品</el-menu-item>
+        <el-menu-item :index="2">全部博客</el-menu-item>
+        <el-menu-item :index="3">这里反馈</el-menu-item>
+
+    </el-menu>
+
+    </el-header>
+    <div class="c_div">
+    <el-main style="height: 100%">
+
+
+    <iframe
+            id="cIframe"
+            class="c_iframe"
+            name="cIframe"
+            :src="iframeUrl"
+            width="100%"
+            height="99%"
+            frameborder="0"
+            v-show="!loading"
+            style="color: white"
+    ></iframe>
+        </div>
+    </el-main>
+
+
+    <el-footer style="background-color: #212529;height: 5%">
+        <span><a href="https://beian.miit.gov.cn/" target="_blank" style="color: white">冀ICP备2023004183号-1</a></span>
+    </el-footer>
+</el-container>
+</div>
+
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../admin/plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../admin/plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="../admin/plugins/axios/axios.min.js"></script>
+
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                activeIndex: '1',
+
+                menuList: [
+                    {
+                        id: '1',
+                        name: '全部产品',
+                        url: './page/product.html',
+                        icon: 'icon-member'
+                    },
+                    {
+                        id: '2',
+                        name: '全部博客',
+                        url: './page/blog.html',
+                        icon: 'icon-category'
+                    },
+                    {
+                        id: '3',
+                        name: '这里反馈',
+                        url: './page/feedback.html',
+                        icon: 'icon-food'
+                    }
+                ],
+                iframeUrl: './page/product.html'
+            };
+        },
+        created() {
+            localStorage.setItem("user","access");
+            this.init()
+        },
+        methods: {
+            async init() {
+                let params = new URLSearchParams(window.location.search);
+                console.log(params)
+                let p = params.get("p")
+                // alert(p)
+                this.handleSelect(params.get("p"), null)
+            },
+            handleSelect(key, keyPath) {
+                console.log(key, keyPath);
+                if (key == 0) {
+                    window.location.href = "./index.html"
+                }
+                this.iframeUrl = this.menuList[key - 1].url
+                // alert(this.iframeUrl)
+            }
+        }
+    })
+</script>
+</body>
+
+
+</html>

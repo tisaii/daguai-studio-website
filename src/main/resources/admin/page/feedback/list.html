@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="../../plugins/element-ui/index.css" />
+  <link rel="stylesheet" href="../../styles/common.css" />
+  <link rel="stylesheet" href="../../styles/page.css" />
+  <style>
+  .search-btn {
+    margin-left: 20px;
+  }
+  .tableBar{
+    justify-content: flex-start !important;
+  }
+  .info-box{
+    margin: -15px -44px 20px;
+  }
+  .info-box .item-box{
+    display: flex;
+    height: 20px;
+    line-height: 20px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #666666;
+    text-align: left;
+    margin-bottom: 14px;
+  }
+  .info-box .item-box:last-child{
+    margin-bottom: 0;
+  }
+  .info-box .item-box .label{
+    width: 96px;
+  }
+  .info-box .item-box .des{
+    flex: 1;
+    color: #333333;
+  }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container" id="feedback-app" v-loading="loading">
+    <div class="container">
+      <!-- 搜索项 -->
+      <div class="tableBar">
+        <el-input v-model="contain" placeholder="请输入问题或回复内容" style="width: 250px">
+          <i slot="prefix" class="el-input__icon el-icon-search" style="cursor: pointer" @click="init"></i>
+        </el-input>
+        <el-date-picker v-model="updateTime"
+          clearable 
+          value-format="yyyy-MM-dd HH:mm:ss"
+          type="datetimerange"
+          placeholder="选择日期"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          :default-time="['00:00:00', '23:59:59']"
+          style="width: 400px;margin-left: 20px;"
+        ></el-date-picker>
+<!--        反馈回复状态-->
+        <template>
+          <el-select v-model="status" placeholder="请选择反馈状态" style="margin-left: 20px;">
+            <el-option
+                    v-for="item in options"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value">
+            </el-option>
+          </el-select>
+        </template>
+<!--        <span class="span-btn delBut non" @click="deleteHandle('批量')">批量删除</span>-->
+        <el-button type="primary" class="search-btn" @click="init">查询</el-button>
+        <el-button type="danger" class="search-btn" @click="deleteHandle('批量')">批量删除</el-button>
+
+      </div>
+      <el-table :data="tableData" stripe class="tableBox"
+                @selection-change="handleSelectionChange">
+        <el-table-column
+                type="selection"
+                width="50"
+        ></el-table-column>
+        <el-table-column prop="id" label="反馈号" min-width="55"></el-table-column>
+        <el-table-column prop="状态" label="状态" min-width="30">
+          <template slot-scope="{ row }">
+            <span>{{ getFeedbackType(row) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="question" label="反馈问题" min-width="80"  show-overflow-tooltip></el-table-column>
+        <el-table-column prop="reply" label="回复内容" min-width="80" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="createTime" label="创建时间" min-width="35"></el-table-column>
+        <el-table-column prop="updateTime" label="更新时间" min-width="35"></el-table-column>
+        <el-table-column prop="btn" label="操作">
+          <template slot-scope="{ row }">
+            <el-button type="text" @click="goDetail(row)" class="blueBug" min-width="10">
+              查看
+            </el-button>
+            <el-divider v-if="row.status === 0" direction="vertical"></el-divider>
+            <el-button v-if="row.status === 0" type="text" @click="goReply(row)" class="blueBug" min-width="10">
+              回复
+            </el-button>
+            <el-divider v-if="row.status === 1" direction="vertical"></el-divider>
+            <el-button v-if="row.status === 1" type="text" @click="goReply(row)" class="blueBug" min-width="10">
+              修改
+            </el-button>
+            <el-divider direction="vertical"></el-divider>
+            <el-button type="text" @click="deleteHandle('单删',row.id)" class="blueBug" min-width="10">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-pagination
+        class="pageList"
+        :page-sizes="[10, 20, 30, 40]"
+        :page-size="pageSize"
+        :current-page.sync="page"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="counts"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      ></el-pagination>
+    </div>
+
+    <!-- 查看弹框部分 -->
+    <el-dialog
+      title="反馈信息"
+      :visible.sync="dialogVisible"
+      width="30%"
+      :before-close="handleClose"
+    >
+      <div class="info-box">
+        <div class="item-box">
+          <span class="label">反馈号：</span>
+          <span class="des">{{ diaForm.id }}</span>
+        </div>
+        <div class="item-box">
+          <span class="label">反馈状态：</span>
+          <span class="des">{{ getFeedbackType(diaForm) }}</span>
+        </div>
+        <div class="item-box">
+          <span class="label">反馈问题：</span>
+          <span class="des">{{ diaForm.question }}</span>
+        </div>
+        <div class="item-box">
+          <span class="label">回复内容：</span>
+          <span class="des">{{ diaForm.reply }}</span>
+        </div>
+        <div class="item-box">
+          <span class="label">回复时间：</span>
+          <span class="des">{{ diaForm.updateTime }}</span>
+        </div>
+      </div>
+    </el-dialog>
+
+
+    <el-dialog
+            title="回复"
+            :visible.sync="replyVisible"
+            width="30%"
+            :before-close= handleReplyClose
+    >
+      <el-form ref="replyForm" :model="replyForm" label-width="80px">
+        <el-form-item label="反馈问题">
+          <el-input disabled v-model="replyForm.question"></el-input>
+        </el-form-item>
+        <el-form-item label="回复">
+          <el-input type="textarea" v-model="replyForm.reply"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="onSubmit()">保存</el-button>
+          <el-button @click="handleReplyClose">取消</el-button>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
+
+  </div>
+    <!-- 开发环境版本，包含了有帮助的命令行警告 -->
+    <script src="../../plugins/vue/vue.js"></script>
+    <!-- 引入组件库 -->
+    <script src="../../plugins/element-ui/index.js"></script>
+    <!-- 引入axios -->
+    <script src="../../plugins/axios/axios.min.js"></script>
+    <script src="../../js/request.js"></script>
+    <script src="../../api/feedback.js"></script>
+    <script>
+      new Vue({
+        el: '#feedback-app',
+        data() {
+          return {
+             contain: '',
+             updateTime: '',
+             beginTime: '',
+             endTime: '',
+             status:undefined,
+             counts: 0,
+             page: 1,
+             pageSize: 10,
+             tableData : [],
+             dialogVisible: false,
+             replyVisible:false,
+             replyForm:{
+               // id:'12312313',
+               // question:'什么时候上线',
+               // reply:'2021-10-2'
+             },
+            checkList:[],
+             diaForm: {},
+             loading: false,
+
+            options: [{
+              value: undefined,
+              label: '全部'
+            }, {
+              value: 0,
+              label: '未回复'
+            }, {
+              value: 1,
+              label: '已回复'
+            }],
+            value: undefined
+          }
+        },
+        computed: {},
+        watch:{
+          updateTime (val) {
+            if (val && val.length >= 2) {
+              this.beginTime = val[0]
+              this.endTime = val[1]
+            } else {
+              this.beginTime = ''
+              this.endTime = ''
+            }
+          }
+        },
+        created() {
+          this.init()
+        },
+        mounted() {
+          // this.loading = false
+        },
+        methods: {
+          async init () {
+            let params={ page: this.page, pageSize: this.pageSize, contain: this.contain || undefined, beginTime: this.beginTime || undefined, endTime: this.endTime || undefined ,status:this.status || undefined}
+            let s=this.status
+            if(this.status!=undefined){
+               s=s.toString()
+              }else{
+              s=undefined
+            }
+            params={
+              ...params,
+              status: s
+            }
+            getFeedbackDetailPage(params).then(res => {
+              if (String(res.code) === '1') {
+                this.tableData = res.data.records || []
+                this.counts = res.data.total
+              }
+            }).catch(err => {
+              this.$message.error('请求出错了：' + err)
+            })
+          },
+          handleQuery() {
+            this.page = 1;
+            this.init();
+          },
+           getFeedbackType (row) {
+            let str = ''
+            switch(row.status){
+                case 0:
+                    str =  '未回复'
+                break;
+                case 1:
+                    str =  '已回复'
+                break;
+                // case 3:
+                //     str =  '已派送'
+                // break;
+                // case 4:
+                //     str =  '已完成'
+                // break;
+                // case 5:
+                //     str =  '已取消'
+                // break;
+
+            }
+            return str
+          },
+          // 查看详情
+          goDetail (row) {
+            this.diaForm = {}
+            this.dialogVisible = true
+            this.diaForm = { ...row }
+          },
+          // 回复
+          goReply (row) {
+            this.replyForm = {}
+            this.replyVisible = true
+            this.replyForm = { ...row }
+          },
+          onSubmit() {
+              //回复
+              let param={...this.replyForm}
+              param.status=1;
+              if(param.reply==undefined) {
+                this.$message.error("回复不能为空")
+                return;
+              }
+              replyFeedback(param).then(res=>{
+                if(res.code=1){
+                  this.$message.success("回复成功")
+                  this.handleReplyClose()
+                  this.handleCurrentChange (this.page)
+                }else{
+                  this.$message.error("添加失败")
+                }
+              })
+          },
+          // 全部操作
+          handleSelectionChange (val){
+            let checkArr = []
+            val.forEach((n) => {
+              checkArr.push(n.id)
+            })
+            this.checkList = checkArr
+          },
+          // // 取消，派送，完成
+          // cancelOrDeliveryOrComplete (status, id) {
+          //   this.$confirm('确认更改该订单状态?', '提示', {
+          //       'confirmButtonText': '确定',
+          //       'cancelButtonText': '取消',
+          //       'type': 'warning'
+          //     }).then(() => {
+          //       editFeedbackDetail(params).then(res => {
+          //         if (res.code === 1) {
+          //           this.$message.success(status === 3 ? '订单已派送' : '订单已完成')
+          //           this.init()
+          //         } else {
+          //           this.$message.error(res.msg || '操作失败')
+          //         }
+          //       }).catch(err => {
+          //         this.$message.error('请求出错了：' + err)
+          //       })
+          //   })
+          //   const params = {
+          //     status,
+          //     id
+          //   }
+          // },
+          // 删除
+          deleteHandle (type, id) {
+            if (type === '批量' && id === null) {
+              if (this.checkList.length === 0) {
+                return this.$message.error('请选择删除对象')
+              }
+            }
+            this.$confirm('确定删除该反馈, 是否继续?', '确定删除', {
+              'confirmButtonText': '确定',
+              'cancelButtonText': '取消',
+            }).then(() => {
+              deleteFeedback(type === '批量' ? this.checkList.join(',') : id).then(res => {
+                if (res.code === 1) {
+                  this.$message.success('删除成功！')
+                  this.handleQuery()
+                } else {
+                  this.$message.error(res.msg || '操作失败')
+                }
+              }).catch(err => {
+                this.$message.error('请求出错了：' + err)
+              })
+            })
+          },
+          handleClose () {
+            this.dialogVisible = false
+          },
+          handleReplyClose() {
+            this.replyVisible = false
+          },
+          handleSizeChange (val) {
+            this.pageSize = val
+            this.init()
+          },
+          handleCurrentChange (val) {
+            this.page = val
+            this.init()
+          }
+        }
+      })
+    </script>
+</body>
+</html>

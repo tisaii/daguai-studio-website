@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>小狼开发</title>
+    <link rel="stylesheet" href="../../admin/plugins/element-ui/index.css"/>
+
+
+    <style>
+        /*.block{*/
+        /*    display: flex;*/
+        /*    flex-wrap: wrap;*/
+        /*}*/
+        html, body {
+            height: 100%;
+            width: 99%;
+
+        }
+
+        /*body {*/
+        /*    overflow-x: hidden;*/
+        /*    overflow-y: hidden;*/
+        /*}*/
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+
+        }
+
+        .demo-table-expand {
+            font-size: 0;
+        }
+        .demo-table-expand label {
+            width: 90px;
+            color: #99a9bf;
+        }
+        .demo-table-expand .el-form-item {
+            margin-right: 0;
+            margin-bottom: 0;
+            width: 50%;
+        }
+        .el-main{
+            height: 100%;
+            width: 100%;
+            /*background-color: rgba(0,0,0,0.8);*/
+            -moz-opacity:0.80;
+            opacity: 0.80
+            /*background-image: url("content/subImage/back-1.png");*/
+            /*filter:alpha(Opacity=85);*/
+
+        }
+
+    </style>
+</head>
+<body>
+<div id="feedback" style="height: 100%">
+    <el-container style="height: 100%">
+        <el-header>
+            <div class="tableBar" style="height: 10%;">
+                <el-input
+                        v-model="input"
+                        placeholder="请输入反馈的问题或答复查询"
+                        style="width: 250px"
+                        clearable
+                        @keyup.enter.native="handleQuery"
+                >
+                    <i
+                            slot="prefix"
+                            class="el-input__icon el-icon-search"
+                            style="cursor: pointer"
+                            @click="init"
+                    ></i>
+                </el-input>
+
+                <el-button type="primary" @click="handleQuery">查询</el-button>
+                <el-button type="info" @click="addFeedback">点我反馈</el-button>
+            </div>
+        </el-header>
+
+        <el-main style="height: 85%">
+            <el-table
+                    highlight-current-row
+                    :data="feedbackList"
+                    style="width: 100%">
+                <el-table-column type="expand">
+                    <template slot-scope="props">
+                        <el-form label-position="left" inline class="demo-table-expand">
+                            <el-form-item label="id">
+                                <span>{{ props.row.id }}</span>
+                            </el-form-item>
+                            <el-form-item label="状态">
+                                <span>{{ props.row.status===1?'已回复':'未回复' }}</span>
+                            </el-form-item>
+                            <el-form-item label="反馈问题Q">
+                                <span style="color: red">{{ props.row.question }}</span>
+                            </el-form-item>
+                            <el-form-item label="问题回复A">
+                                <span style="color: red">{{ props.row.reply }}</span>
+                            </el-form-item>
+                            <el-form-item label="提问时间">
+                                <span>{{ props.row.createTime }}</span>
+                            </el-form-item>
+                            <el-form-item label="回复时间">
+                                <span>{{props.row.updateTime}}</span>
+                            </el-form-item>
+                        </el-form>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        label="序号"
+                        width="60"
+                        type="index">
+                </el-table-column>
+                <el-table-column
+                        label="问题"
+                        prop="question">
+                </el-table-column>
+                <el-table-column
+                        label="创建时间"
+                        prop="createTime">
+                </el-table-column>
+                <el-table-column
+                        label="回复时间"
+                        prop="updateTime">
+                </el-table-column>
+            </el-table>
+
+        </el-main>
+
+        <el-footer style="height: 5%;bottom: 10px">
+
+            <div class="pageSet">
+                <el-pagination
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                        :current-page="this.page"
+                        :page-sizes="[10, 20, 50, 100]"
+                        :page-size="this.pageSize"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="this.count">
+                </el-pagination>
+            </div>
+        </el-footer>
+
+    </el-container>
+
+    <el-dialog
+            title="回复"
+            :visible.sync="feedbackVisible"
+            width="30%"
+            :before-close= handleFeedbackClose
+    >
+        <el-form ref="replyForm" :model="feedbackForm" label-width="80px">
+            <el-form-item label="反馈问题">
+                <el-input type="textarea" v-model="feedbackForm.question"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="onSubmit()">siu~</el-button>
+                <el-button @click="handleFeedbackClose">取消</el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
+
+</div>
+
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../../admin/plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../../admin/plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="../../admin/plugins/axios/axios.min.js"></script>
+<script src="../js/request.js"></script>
+<script src="../../admin/api/feedback.js"></script>
+
+<script>
+    new Vue({
+        el: '#feedback',
+        data() {
+            return {
+                input: '',
+                value: '',
+                feedbackList: [],
+                page: 1,
+                pageSize: 10,
+                count: 0,
+                status: 1,
+                feedbackVisible:false,
+                feedbackForm: {
+                    question: ''
+                }
+
+            }
+        },
+        created() {
+            // alert(123)
+            this.init()
+        },
+        methods: {
+            async init() {
+                this.index = 0;
+                const params = {
+                    page: this.page,
+                    pageSize: this.pageSize,
+                    contain: this.input ? this.input : undefined,
+                    status: this.status
+                }
+                // alert(this.input)
+                await getFeedbackDetailPage(params).then(res => {
+                    if (res.code == 1) {
+                        this.feedbackList = res.data.records;
+                        this.count = res.data.total;
+                    }else {
+                        this.$message.error(res.msg)
+                    }
+                })
+            },
+            handleQuery() {
+                this.page = 1;
+                this.init()
+            },
+            handleSizeChange(val) {
+                this.pageSize = val
+                this.init()
+            },
+            handleCurrentChange(val) {
+                this.page = val
+                this.init()
+            },
+            handleFeedbackClose(){
+                this.feedbackVisible=false;
+            },
+            addFeedback(){
+                this.feedbackForm.question='';
+                this.feedbackVisible=true;
+            },
+            onSubmit(){
+                if(this.feedbackForm.question===''){
+                    this.$message.error("反馈不能为空哦")
+                    return
+                }
+                addFeedback(this.feedbackForm).then(res=>{
+
+                    if(res.code==1){
+                        this.$message.success("反馈成功!我们确认并回复后您的反馈将会在此显示!")
+                        this.handleFeedbackClose()
+                    }else{
+                        this.$message.error(res.msg)
+                    }
+                })
+            }
+        }
+
+    })
+</script>
+</body>
+</html>

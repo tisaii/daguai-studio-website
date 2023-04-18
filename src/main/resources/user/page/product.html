@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>小狼开发</title>
+    <link rel="stylesheet" href="../../admin/plugins/element-ui/index.css"/>
+
+    <style>
+        /*.block{*/
+        /*    display: flex;*/
+        /*    flex-wrap: wrap;*/
+        /*}*/
+        html,body{
+            height: 100%;
+            width: 99%;
+
+        }
+        /*body{*/
+        /*    overflow-x:hidden; overflow-y:hidden;*/
+        /*}*/
+        .footer {
+            position: fixed;
+            bottom: 0;
+
+        }
+        .el-main{
+            height: 100%;
+            width: 100%;
+            /*background-color: rgba(0,0,0,0.8);*/
+            -moz-opacity:0.80;
+            opacity: 0.80
+            /*background-image: url("content/subImage/back-1.png");*/
+            /*filter:alpha(Opacity=85);*/
+
+        }
+        img{
+            background-color: rgba(0,0,0,1)!important;
+            /*-moz-opacity:1!important;*/
+            /*opacity: 1*/
+            /*opacity: 1!important;*/
+        }
+
+    </style>
+</head>
+<body>
+<div id="product" style="height: 100%">
+    <el-container style="height: 100%">
+
+        <el-header style="height: 10%">
+<div class="tableBar">
+    <el-input
+            v-model="input"
+            placeholder="请输入产品名称"
+            style="width: 250px"
+            clearable
+            @keyup.enter.native="handleQuery"
+    >
+        <i
+                slot="prefix"
+                class="el-input__icon el-icon-search"
+                style="cursor: pointer"
+                @click="init"
+        ></i>
+    </el-input>
+
+    <el-select v-model="value" placeholder="请选择">
+        <el-option
+                v-for="item in proCateList"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id">
+        </el-option>
+    </el-select>
+    <el-button type="primary" @click="handleQuery">查询</el-button>
+</div>
+        </el-header>
+
+        <el-main style="height: 85%">
+
+        <div class="productImg" style="height: 100%">
+            <el-row :gutter="20" style="">
+                <el-col :span="10"  style="height: 210px;width: 180px"  v-for="(item,index) in productList" :key="item">
+                    <el-card :body-style="{ padding: '0px' }" shadow="hover" style="height: 210px;width: 100%">
+                        <el-image style="height: 180px;width: 180px" :src="getImage(item.image)" :preview-src-list="[ `/common/download?name=${item.image}` ]"></el-image>
+                        <div style="height: 30px;text-align: center;-moz-opacity:0.80;opacity: 0.80">{{item.name}}</div>
+                    </el-card>
+
+                </el-col>
+
+            </el-row>
+
+        </div>
+        </el-main>
+        <el-footer style="height: 5%;bottom: 10px">
+
+    <div class="pageSet">
+        <el-pagination
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                :current-page="this.page"
+                :page-sizes="[10, 20, 50, 100]"
+                :page-size="this.pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="this.count">
+        </el-pagination>
+    </div>
+        </el-footer>
+
+
+    </el-container>
+
+
+</div>
+
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../../admin/plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../../admin/plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="../../admin/plugins/axios/axios.min.js"></script>
+<script src="../js/request.js"></script>
+<script src="../../admin/api/product.js"></script>
+
+<script>
+    new Vue({
+        el: '#product',
+        data() {
+            return {
+                input: '',
+                value: '',
+                proCateList: [],
+                productList: [],
+                page: 1,
+                pageSize: 10,
+                count: 0,
+                index: 0,
+            }
+        },
+        created(){
+            // alert(123)
+          this.getproductType();
+          this.init()
+        },
+        methods: {
+            async init(){
+                this.index=0;
+                const params = {
+                    page: this.page,
+                    pageSize: this.pageSize,
+                    name: this.input ? this.input : undefined,
+                    type: this.value?this.value:undefined
+                }
+                // alert(this.input)
+                await getProductPage(params).then(res=> {
+                    if (res.code == 1) {
+                        this.productList = res.data.records;
+                        this.count = res.data.total;
+                    }else {
+                        this.$message.error(res.msg)
+                    }
+                })
+            },
+            getproductType () {
+                getCategoryList({'type':1}).then(res => {
+                    // alert(res.code)
+                    if (res.code == '1') {
+                        this.proCateList = res.data
+                        this.proCateList=[...this.proCateList,{id: 0,name: '全部'}]
+                        console.log(this.proCateList)
+                        // this.getproductList(res.data[0].id)
+                    } else {
+                        console.log(res.data)
+                        this.$message.error(res.msg)
+                    }
+                })
+            },
+            handleQuery(){
+                this.page=1;
+                this.init()
+            },
+            getImage (image) {
+                return `/common/download?name=${image}`
+            },
+            handleSizeChange (val) {
+                this.pageSize = val
+                this.init()
+            },
+            handleCurrentChange (val) {
+                this.page = val
+                this.init()
+            }
+        }
+    })
+</script>
+</body>
+</html>
