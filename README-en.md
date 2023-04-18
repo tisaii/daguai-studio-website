@@ -5,27 +5,27 @@
 
 1. #### User Surface :
 
-![User index](/prefix-resource/image/User index.png)
+![User index](/prefix-resource/image/User-index.png)
 
-![User product](/prefix-resource/image/User product.png)
+![User product](/prefix-resource/image/User-product.png)
 
-![User blog](prefix-resource/image/User blog.png)
+![User blog](prefix-resource/image/User-blog.png)
 
-![User feedback](prefix-resource/image/User feedback.png)
+![User feedback](prefix-resource/image/User-feedback.png)
 
 2. #### Admin Surface
 
-![Admin index](prefix-resource/image/Admin index.png)
+![Admin index](prefix-resource/image/Admin-index.png)
 
-![Admin account](prefix-resource/image/Admin account.png)
+![Admin account](prefix-resource/image/Admin-account.png)
 
-![Admin category](prefix-resource/image/Admin category.png)
+![Admin category](prefix-resource/image/Admin-category.png)
 
-![Admin product](prefix-resource/image/Admin product.png)
+![Admin product](prefix-resource/image/Admin-product.png)
 
-![Admin Blog](prefix-resource/image/Admin Blog.png)
+![Admin Blog](prefix-resource/image/Admin-Blog.png)
 
-![Admin feedback](prefix-resource/image/Admin feedback.png)
+![Admin feedback](prefix-resource/image/Admin-feedback.png)
 
 ### **You need prepare  below environment below to run this project : **
 
