@@ -47,8 +47,6 @@ Excute the file `daguai.sql` in path prefix-resource, and create database and da
 
 #### Second Step:
 
-修改`application.yml`文件中的`port` , `database` , `redis` 配置为适合你的 .并修改`Config`包下的`RedissonConfig.java`中的对`Redis`的配置到合适.
-
 Modify the configuration(value) of fields that `port` , `database` , `redis` in `application.yml`.  And modify the configuration of `Redis` in `RedissonConfig.java` where in package of `Config` .
 
 #### Third Step:
